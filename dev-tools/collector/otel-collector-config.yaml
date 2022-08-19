@@ -1,0 +1,25 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+exporters:
+    logging:
+
+    otlp/elastic:
+      endpoint: apm-server:8200
+processors:
+    batch:
+service:
+    pipelines:
+        traces:
+            receivers: [otlp]
+            exporters: [otlp/elastic]
+            processors: [batch]
+        metrics:
+            receivers: [otlp]          
+            exporters: [otlp/elastic]
+            processors: [batch]            
+        logs:
+            receivers: [otlp]
+            exporters: [logging, otlp/elastic]
+            processors: []

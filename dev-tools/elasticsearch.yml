@@ -1,0 +1,49 @@
+# ======================== Elasticsearch Configuration =========================
+#
+#...
+#
+# ---------------------------------- Various -----------------------------------
+# (This section is needed only if you want to configure security)
+#
+# Require explicit names when deleting indices:
+#
+#action.destructive_requires_name: true
+cluster.name: test-cluster
+node.name: node-name
+network.host: "0.0.0.0"
+
+discovery.type: single-node
+
+bootstrap.memory_lock: true
+xpack.security.enabled: true
+xpack.security.authc.api_key.enabled: true
+#xpack.security.http.ssl.enabled: true
+#xpack.security.http.ssl.key: certs/elastic/elastic.key
+#xpack.security.http.ssl.certificate: certs/elastic/elastic.crt
+#xpack.security.http.ssl.certificate_authorities: certs/ca/ca.crt
+#xpack.security.http.ssl.verification_mode: certificate
+#xpack.security.transport.ssl.enabled: true
+#xpack.security.transport.ssl.key: certs/elastic/elastic.key
+#xpack.security.transport.ssl.certificate: certs/elastic/elastic.crt
+#xpack.security.transport.ssl.certificate_authorities: certs/ca/ca.crt
+#xpack.security.transport.ssl.verification_mode: certificate
+#xpack.license.self_generated.type: basic
+
+
+#xpack.security.enabled: true
+#xpack.ssl.client_authentication
+#xpack.ssl.verification_mode: certificate
+#xpack.security.transport.ssl.enabled: true
+#pkcs12 or jks
+#xpack.security.transport.ssl.verification_mode: certificate 
+#xpack.security.transport.ssl.keystore.path: certs/elastic-certificates.p12 
+#xpack.security.transport.ssl.truststore.path: certs/elastic-certificates.p12
+#pem
+#xpack.security.transport.ssl.verification_mode: certificate 
+#xpack.security.transport.ssl.key: certs\instance.key 
+#xpack.security.transport.ssl.certificate: certs\instance.crt 
+#xpack.security.transport.ssl.certificate_authorities: [ "certs/ca.crt" ]
+#xpack.security.http.ssl.enabled: true
+#xpack.ssl.verification_mode: certificate
+#xpack.security.http.ssl.keystore.path: certs/elastic-certificates.p12
+#xpack.security.http.ssl.truststore.path: certs/elastic-certificates.p12

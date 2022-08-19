@@ -1,0 +1,1 @@
+https://www.meziantou.net/monitoring-a-dotnet-application-using-opentelemetry.htm
