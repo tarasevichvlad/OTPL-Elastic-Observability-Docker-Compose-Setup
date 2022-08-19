@@ -6,49 +6,55 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
+// Constants
 const string serviceName = "Weather.API";
 const string serviceVersion = "0.0.1";
+const string activitySourceName = $"{serviceName}_ActivitySource";
+const string meterName = $"{serviceName}_Metrics";
+var opentelmetryEndpoint = new Uri("http://localhost:4317");
+var resourceBuilder = ResourceBuilder.CreateEmpty().AddService(serviceName, serviceVersion: serviceVersion).AddEnvironmentVariableDetector();
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Configure metrics
-builder.Services.AddOpenTelemetryMetrics(builder =>
+builder.Services.AddOpenTelemetryMetrics(meterProviderBuilder =>
 {
-    builder.SetResourceBuilder(ResourceBuilder.CreateEmpty().AddService(serviceName, serviceVersion: serviceVersion));
-    builder.AddHttpClientInstrumentation();
-    builder.AddAspNetCoreInstrumentation();
-    builder.AddMeter("MyApplicationMetrics");
-    builder.AddOtlpExporter(options =>
+    meterProviderBuilder.SetResourceBuilder(resourceBuilder);
+    meterProviderBuilder.AddHttpClientInstrumentation();
+    meterProviderBuilder.AddAspNetCoreInstrumentation();
+    meterProviderBuilder.AddMeter(meterName);
+    meterProviderBuilder.AddOtlpExporter(options =>
     {
         options.Protocol = OtlpExportProtocol.Grpc;
-        options.Endpoint = new Uri("http://localhost:4317");
+        options.Endpoint = opentelmetryEndpoint;
     });
 });
 
 // Configure tracing
-builder.Services.AddOpenTelemetryTracing(builder =>
+builder.Services.AddOpenTelemetryTracing(tracerProviderBuilder =>
 {
-    builder.SetResourceBuilder(ResourceBuilder.CreateEmpty().AddService(serviceName, serviceVersion: serviceVersion));
-    builder.AddHttpClientInstrumentation();
-    builder.AddAspNetCoreInstrumentation();
-    builder.AddSource("MyApplicationActivitySource");
-    builder.AddOtlpExporter(options =>
+    tracerProviderBuilder.SetResourceBuilder(resourceBuilder);
+    tracerProviderBuilder.AddHttpClientInstrumentation();
+    tracerProviderBuilder.AddAspNetCoreInstrumentation();
+    tracerProviderBuilder.AddSource(activitySourceName);
+    tracerProviderBuilder.AddOtlpExporter(options =>
     {
         options.Protocol = OtlpExportProtocol.Grpc;
-        options.Endpoint = new Uri("http://localhost:4317");
+        options.Endpoint = opentelmetryEndpoint;
     });
 });
 
 // Configure logging
-builder.Logging.AddOpenTelemetry(builder =>
+builder.Logging.AddOpenTelemetry(openTelemetryLoggerOptions =>
 {
-    builder.SetResourceBuilder(ResourceBuilder.CreateEmpty().AddService(serviceName, serviceVersion: serviceVersion));
-    builder.IncludeFormattedMessage = true;
-    builder.IncludeScopes = true;
-    builder.ParseStateValues = true;
-    builder.AddOtlpExporter(options =>
+    openTelemetryLoggerOptions.SetResourceBuilder(resourceBuilder);
+    openTelemetryLoggerOptions.IncludeFormattedMessage = true;
+    openTelemetryLoggerOptions.IncludeScopes = true;
+    openTelemetryLoggerOptions.ParseStateValues = true;
+    openTelemetryLoggerOptions.AddOtlpExporter(options =>
     {
         options.Protocol = OtlpExportProtocol.Grpc;
-        options.Endpoint = new Uri("http://localhost:4317");
+        options.Endpoint = opentelmetryEndpoint;
     });
 });
 
@@ -64,8 +70,9 @@ if (app.Environment.IsDevelopment())
 }
 
 // Create a route (GET /) that will make an http call, increment a metric and log a trace
-var activitySource = new ActivitySource("MyApplicationActivitySource");
-var meter = new Meter("MyApplicationMetrics");
+var activitySource = new ActivitySource(activitySourceName);
+var meter = new Meter(meterName);
+
 var requestCounter = meter.CreateCounter<int>("compute_requests");
 var httpClient = new HttpClient();
 
