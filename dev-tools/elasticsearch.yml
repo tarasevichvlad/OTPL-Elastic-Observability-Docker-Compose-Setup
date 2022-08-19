@@ -17,6 +17,11 @@ discovery.type: single-node
 bootstrap.memory_lock: true
 xpack.security.enabled: true
 xpack.security.authc.api_key.enabled: true
+xpack.security.authc:
+  anonymous:
+    username: anonymous_user
+    roles: apm_system, beats_admin, beats_system, editor, enrich_user, ingest_admin, kibana_admin, kibana_system, logstash_admin, logstash_system, machine_learning_admin, machine_learning_user, monitoring_user, remote_monitoring_agent, remote_monitoring_collector, superuser, transform_admin, watcher_admin, viewer
+    authz_exception: true
 #xpack.security.http.ssl.enabled: true
 #xpack.security.http.ssl.key: certs/elastic/elastic.key
 #xpack.security.http.ssl.certificate: certs/elastic/elastic.crt
