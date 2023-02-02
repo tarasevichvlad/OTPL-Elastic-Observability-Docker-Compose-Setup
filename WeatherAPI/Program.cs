@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
@@ -12,37 +13,45 @@ const string serviceVersion = "0.0.1";
 const string activitySourceName = $"{serviceName}_ActivitySource";
 const string meterName = $"{serviceName}_Metrics";
 var opentelmetryEndpoint = new Uri("http://localhost:4317");
-var resourceBuilder = ResourceBuilder.CreateEmpty().AddService(serviceName, serviceVersion: serviceVersion).AddEnvironmentVariableDetector();
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure metrics
-builder.Services.AddOpenTelemetryMetrics(meterProviderBuilder =>
-{
-    meterProviderBuilder.SetResourceBuilder(resourceBuilder);
-    meterProviderBuilder.AddHttpClientInstrumentation();
-    meterProviderBuilder.AddAspNetCoreInstrumentation();
-    meterProviderBuilder.AddMeter(meterName);
-    meterProviderBuilder.AddOtlpExporter(options =>
-    {
-        options.Protocol = OtlpExportProtocol.Grpc;
-        options.Endpoint = opentelmetryEndpoint;
-    });
-});
+var resourceBuilder = ResourceBuilder
+    .CreateEmpty()
+    .AddService(serviceName, serviceVersion: serviceVersion)
+    .AddEnvironmentVariableDetector()
+    .AddAttributes(new []{ new KeyValuePair<string, object>("deployment.environment", builder.Environment.EnvironmentName) });
 
-// Configure tracing
-builder.Services.AddOpenTelemetryTracing(tracerProviderBuilder =>
-{
-    tracerProviderBuilder.SetResourceBuilder(resourceBuilder);
-    tracerProviderBuilder.AddHttpClientInstrumentation();
-    tracerProviderBuilder.AddAspNetCoreInstrumentation();
-    tracerProviderBuilder.AddSource(activitySourceName);
-    tracerProviderBuilder.AddOtlpExporter(options =>
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracerProviderBuilder =>
     {
-        options.Protocol = OtlpExportProtocol.Grpc;
-        options.Endpoint = opentelmetryEndpoint;
-    });
-});
+        tracerProviderBuilder
+            .AddSource(activitySourceName)
+            .SetResourceBuilder(resourceBuilder)
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddOtlpExporter(options =>
+            {
+                options.Protocol = OtlpExportProtocol.Grpc;
+                options.Endpoint = opentelmetryEndpoint;
+            });
+    })
+    .WithMetrics(metricProviderBuilder =>
+    {
+        metricProviderBuilder
+            .AddMeter(meterName)
+            .AddProcessInstrumentation()
+            .AddRuntimeInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddAspNetCoreInstrumentation()
+            .SetResourceBuilder(resourceBuilder)
+            .AddOtlpExporter(options =>
+            {
+                options.Protocol = OtlpExportProtocol.Grpc;
+                options.Endpoint = opentelmetryEndpoint;
+            });
+    })
+    .StartWithHost();
 
 // Configure logging
 builder.Logging.AddOpenTelemetry(openTelemetryLoggerOptions =>
